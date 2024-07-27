@@ -123,7 +123,10 @@ abstract class CommitUtils {
         ulog.update(styledLocalized("fastback.hud.local-saving", NATIVE_GIT));
         final File worktree = repo.getWorkTree();
         final Map<String, String> env = Map.of("GIT_LFS_FORCE_PROGRESS", "1");
-        final Consumer<String> outputConsumer = line -> ulog.update(styledRaw(line, NATIVE_GIT));
+        final Consumer<String> outputConsumer = line -> {
+        	ulog.update(styledRaw(line, NATIVE_GIT));
+        	syslog().info(line);
+        };
         String[] checkout = {"git", "-C", worktree.getAbsolutePath(), "checkout", "--orphan", newBranchName};
         try {
             doExec(checkout, env, outputConsumer, outputConsumer);

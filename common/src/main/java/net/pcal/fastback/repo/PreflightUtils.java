@@ -21,13 +21,17 @@ package net.pcal.fastback.repo;
 import net.pcal.fastback.config.GitConfig;
 import net.pcal.fastback.logging.SystemLogger;
 import net.pcal.fastback.utils.ProcessException;
-import org.eclipse.jgit.hooks.*;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.StoredConfig;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 
 import static net.pcal.fastback.config.FastbackConfigKey.IS_NATIVE_GIT_ENABLED;
 import static net.pcal.fastback.config.FastbackConfigKey.UPDATE_GITATTRIBUTES_ENABLED;
@@ -78,8 +82,9 @@ abstract class PreflightUtils {
 
     /**
      * Ensures that git-lfs is installed or uninstalled in the worktree as appropriate.
+     * @throws IOException 
      */
-    private static void updateNativeLfsInstallation(final RepoImpl repo) throws ProcessException, GitAPIException {
+    private static void updateNativeLfsInstallation(final RepoImpl repo) throws ProcessException, GitAPIException, IOException {
         if (repo.getConfig().getBoolean(IS_NATIVE_GIT_ENABLED)) {
         	nativeGitLfsUpdater(repo);
         } else {
@@ -96,9 +101,34 @@ abstract class PreflightUtils {
         }
     }
 
-    private static void nativeGitLfsUpdater(final RepoImpl repo) {
-    	PrePushHook test = Hooks.prePush(repo.getJGit().getRepository(), null);
-    	syslog().error(test.getHookName());
-    	syslog().error(test.toString());
+    private static void nativeGitLfsUpdater(final RepoImpl repo) throws IOException, ProcessException {
+    	if (!nativeGitLfsHookCheck(repo.getDirectory())) {
+    		final String[] cmd = {"git", "-C", repo.getWorkTree().getAbsolutePath(), "lfs", "install", "--local"};
+        	doExec(cmd, Collections.emptyMap(), s -> {}, s -> {});
+    	}
+    }
+    private static boolean nativeGitLfsHookCheck(File dir) throws IOException {
+    	File hooksDir = new File(dir, "hooks");
+    	String[] hookNames = {"pre-push", "post-checkout", "post-commit", "post-merge"};
+    	for (String hookName : hookNames) {
+            File hookFile = new File(hooksDir, hookName);
+
+            if (!hookFile.exists()) return false;
+            try (BufferedReader reader = new BufferedReader(new FileReader(hookFile))) {
+				String line;
+				boolean isGood = false;
+				while ((line = reader.readLine()) != null) {
+				    if (line.equalsIgnoreCase("git lfs "
+				    		+ hookName + " \"$@\"")) {
+				    	isGood = true;
+				    	break;
+				    }
+				}
+				if (!isGood) return false;
+			} catch (FileNotFoundException e) {
+				return false;
+			}
+        }
+    	return true;
     }
 }
