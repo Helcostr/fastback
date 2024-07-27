@@ -101,12 +101,34 @@ abstract class PreflightUtils {
         }
     }
 
+    /**
+     * <p>The native git-lfs updater called every preflight
+     * (<b>WHICH CAN SKIP THE GIT-LFS INSTALL</b>)
+     * </p>
+     * @author Helcostr
+     * @param repo The FastBack repository
+     * @see net.pcal.fastback.repo.PreflightUtils.nativeGitLfsHookCheck(File)
+     * @since 0.19.1
+     * @throws IOException
+     * @throws ProcessException
+     */
     private static void nativeGitLfsUpdater(final RepoImpl repo) throws IOException, ProcessException {
     	if (!nativeGitLfsHookCheck(repo.getDirectory())) {
     		final String[] cmd = {"git", "-C", repo.getWorkTree().getAbsolutePath(), "lfs", "install", "--local"};
         	doExec(cmd, Collections.emptyMap(), s -> {}, s -> {});
     	}
     }
+    /**
+     * <p>Boolean indicating that we can skip GitLFS install
+     * based on checking the hook file
+     * </p>
+     * @author Helcostr
+     * @param dir of git metadata (org.eclipse.jgit.lib.Repository.getDirectory())
+     * @see net.pcal.fastback.repo.PreflightUtils.nativeGitLfsUpdater(RepoImpl)
+     * @since 0.19.1
+     * @return Valid GitLFS
+     * @throws IOException
+     */
     private static boolean nativeGitLfsHookCheck(File dir) throws IOException {
     	File hooksDir = new File(dir, "hooks");
     	String[] hookNames = {"pre-push", "post-checkout", "post-commit", "post-merge"};
