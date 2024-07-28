@@ -48,6 +48,7 @@ import static net.pcal.fastback.commands.Commands.SUCCESS;
 import static net.pcal.fastback.commands.Commands.getArgumentNicely;
 import static net.pcal.fastback.commands.Commands.missingArgument;
 import static net.pcal.fastback.commands.Commands.subcommandPermission;
+import static net.pcal.fastback.config.FastbackConfigKey.AUTO_GITLFS_INSTALL;
 import static net.pcal.fastback.config.FastbackConfigKey.AUTOBACK_ACTION;
 import static net.pcal.fastback.config.FastbackConfigKey.AUTOBACK_WAIT_MINUTES;
 import static net.pcal.fastback.config.FastbackConfigKey.BROADCAST_ENABLED;
@@ -87,6 +88,7 @@ enum SetCommand implements Command {
         final LiteralArgumentBuilder<CommandSourceStack> sc = literal(COMMAND_NAME).
                 requires(subcommandPermission(COMMAND_NAME, pf)).
                 executes(cc -> missingArgument("key", cc));
+        registerBooleanConfigValue(AUTO_GITLFS_INSTALL, sc);
         registerBooleanConfigValue(IS_LOCK_CLEANUP_ENABLED, sc);
         registerBooleanConfigValue(IS_BACKUP_ENABLED, sc);
         registerBooleanConfigValue(IS_MODS_BACKUP_ENABLED, sc);
