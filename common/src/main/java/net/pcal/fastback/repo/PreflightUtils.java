@@ -74,7 +74,8 @@ abstract class PreflightUtils {
                 writeResourceToFile("world/gitattributes-jgit", targetPath);
             }
         }
-        updateNativeLfsInstallation(repo);
+        if (config.getBoolean(AUTO_GITLFS_INSTALL))
+            updateNativeLfsInstallation(repo);
     }
 
     // ======================================================================
